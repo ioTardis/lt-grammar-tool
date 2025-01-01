@@ -1,12 +1,13 @@
 package org.example;
 
 import org.jline.terminal.TerminalBuilder;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.stereotype.Component;
 
-
-//TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
-// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
-public class LtGrammarTool {
-    public static void main(String[] args) throws Exception {
+@Component
+public class LtGrammarTool implements CommandLineRunner {
+    @Override
+    public void run(String... args) throws Exception {
         try (var terminal = TerminalBuilder.terminal()) {
             terminal.enterRawMode();
 
