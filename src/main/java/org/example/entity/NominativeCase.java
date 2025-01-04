@@ -6,7 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "nominative_case")
+@Table
 @Builder
 @Getter
 @Setter

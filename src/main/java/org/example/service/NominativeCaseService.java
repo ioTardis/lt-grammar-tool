@@ -24,4 +24,8 @@ public class NominativeCaseService {
     public NominativeCase getNominativeCaseBySingular(String singular) {
         return repository.findBySingular(singular);
     }
+
+    public List<NominativeCase> getFixedAmountOfNominativeCases(int count) {
+        return repository.findFixedAmountOfNominativeCases(count);
+    }
 }
