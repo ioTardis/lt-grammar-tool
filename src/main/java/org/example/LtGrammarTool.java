@@ -1,11 +1,17 @@
 package org.example;
 
+import lombok.RequiredArgsConstructor;
+import org.example.service.CaseCheckDialogService;
 import org.jline.terminal.TerminalBuilder;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class LtGrammarTool implements CommandLineRunner {
+
+    private final CaseCheckDialogService caseCheckDialogService;
+
     @Override
     public void run(String... args) throws Exception {
         try (var terminal = TerminalBuilder.terminal()) {
@@ -13,8 +19,9 @@ public class LtGrammarTool implements CommandLineRunner {
 
             terminal.writer().println("Welcome to the Lithuanian grammar tool: ");
             terminal.writer().println("Choose case to train word conjugation:");
-            terminal.writer().println("1 - Genitive");
-            terminal.writer().println("2 - Accusative");
+            terminal.writer().println("1 - Nominative plural");
+            terminal.writer().println("2 - Genitive");
+            terminal.writer().println("3 - Accusative");
             terminal.writer().println("Q - Exit application.");
             terminal.writer().println();
             terminal.writer().flush();
@@ -26,10 +33,15 @@ public class LtGrammarTool implements CommandLineRunner {
 
                     switch ((char) c) {
                         case '1':
+                            terminal.writer().println("You chose Nominative plural form.");
+                            terminal.writer().flush();
+                            caseCheckDialogService.initiateCaseCheckDialog(terminal);
+                            return;
+                        case '2':
                             terminal.writer().println("You chose Genitive case.");
                             terminal.writer().flush();
                             break;
-                        case '2':
+                        case '3':
                             terminal.writer().println("You chose Accusative case.");
                             terminal.writer().flush();
                             break;

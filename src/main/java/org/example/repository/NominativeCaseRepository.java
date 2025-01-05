@@ -12,6 +12,6 @@ import java.util.List;
 public interface NominativeCaseRepository extends JpaRepository<NominativeCase, Long> {
     NominativeCase findBySingular(String singular);
 
-    @Query(value = "SELECT * FROM nominative_case ORDER BY RAND() LIMIT :count", nativeQuery = true)
+    @Query(value = "SELECT DISTINCT ON (id) * FROM nominative_case ORDER BY id, RANDOM() LIMIT :count", nativeQuery = true)
     List<NominativeCase> findFixedAmountOfNominativeCases(@Param("count") int count);
 }
