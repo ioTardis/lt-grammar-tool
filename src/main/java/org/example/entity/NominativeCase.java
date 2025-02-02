@@ -10,7 +10,7 @@ import lombok.*;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class NominativeCase {
+public class NominativeCase implements Case {
     @Id
     @GeneratedValue
     private long id;

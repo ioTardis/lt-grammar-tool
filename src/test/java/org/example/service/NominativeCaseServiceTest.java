@@ -2,114 +2,126 @@ package org.example.service;
 
 import org.example.entity.NominativeCase;
 import org.example.repository.NominativeCaseRepository;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.dao.DuplicateKeyException;
 
 import java.util.List;
-import java.util.stream.Stream;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.example.TestData.getNominativeCase;
+import static org.example.TestData.mockNominativeCase;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.when;
 
-@DataJpaTest
+@SpringBootTest(classes = {NominativeCaseService.class})
 class NominativeCaseServiceTest {
 
     @Autowired
-    private NominativeCaseRepository repository;
+    private NominativeCaseService nominativeCaseService;
 
-    private NominativeCase nominativeCase;
+    @MockBean
+    private NominativeCaseRepository nominativeCaseRepository;
 
-    @BeforeEach
-    public void setUp() {
-        nominativeCase = NominativeCase.builder()
-                .singular("vyras")
-                .plural("vyrai")
-                .build();
+    private final NominativeCase expectedNominativeCase = getNominativeCase();
+
+    @Test
+    void whenSaveAndInsertSuccessful_thenReturnCase() {
+        // Given
+        when(nominativeCaseRepository.save(expectedNominativeCase)).thenReturn(expectedNominativeCase);
+
+        // When
+        final var result = nominativeCaseService.save(expectedNominativeCase);
+
+        // Then
+        assertEquals(expectedNominativeCase, result);
     }
 
     @Test
-    public void shouldSaveNominativeCase() {
-        // Given - When
-        final var savedCase = repository.save(nominativeCase);
+    void whenSaveAndInsertUnsuccessful_thenThrowException() {
+        // Given
+        when(nominativeCaseRepository.save(expectedNominativeCase)).thenThrow(DuplicateKeyException.class);
 
-        // Then
-        assertNotNull(savedCase);
-        assertEquals(nominativeCase, savedCase);
+        // When - Then
+        assertThrows(DuplicateKeyException.class, () -> nominativeCaseService.save(expectedNominativeCase));
     }
 
     @Test
-    public void shouldGetAllNominativeCases() {
+    void whenGetAllAndRepositoryReturnsCases_thenReturnCases() {
         // Given
-        repository.save(nominativeCase);
+        final var expectedCases = List.of(mockNominativeCase("vyras", "vyrai"), mockNominativeCase("moteris", "moterys"));
+        when(nominativeCaseRepository.findAll()).thenReturn(expectedCases);
 
         // When
-        final var result = repository.findAll();
+        final var result = nominativeCaseService.getAll();
 
         // Then
-        assertNotNull(result);
-        assertEquals(1, result.size());
+        assertEquals(expectedCases, result);
     }
 
     @Test
-    public void shouldGetNominativeCaseBySingular() {
+    void whenGetAllAndRepositoryReturnsEmptyList_thenReturnEmptyList() {
         // Given
-        repository.save(nominativeCase);
+        when(nominativeCaseRepository.findAll()).thenReturn(List.of());
 
         // When
-        final var result = repository.findBySingular("vyras");
+        final var result = nominativeCaseService.getAll();
 
         // Then
-        assertNotNull(result);
-        assertEquals(nominativeCase, result);
+        assertEquals(List.of(), result);
     }
 
-    @Disabled("RANDOM() PostgreSQL function in H2 is RAND(). Need special configuration or use of test container")
-    @ParameterizedTest
-    @MethodSource("provideMultipleNominativeCases")
-    public void shouldGetFixedAmountOfNominativeCases(List<NominativeCase> nominativeCases) {
+    @Test
+    void whenGetBySingularAndRepositoryReturnsCase_thenReturnOptionalCase() {
         // Given
-        nominativeCases.forEach(repository::save);
+        final var singular = "vyras";
+        final var expectedCase = getNominativeCase();
+        when(nominativeCaseRepository.findBySingular(singular)).thenReturn(expectedCase);
 
         // When
-        final List<NominativeCase> result = repository.findFixedAmountOfNominativeCases(nominativeCases.size());
+        final var result = nominativeCaseService.getBySingular(singular);
 
         // Then
-        assertNotNull(result);
-        assertThat(nominativeCases).hasSameSizeAs(result);
-        assertThat(nominativeCases).hasSameElementsAs(result);
+        assertTrue(result.isPresent());
+        assertEquals(expectedCase, result.get());
     }
 
-    static private Stream<Arguments> provideMultipleNominativeCases() {
-        return Stream.of(
-                Arguments.of(List.of(
-                        mockNominativeCase("vyras", "vyrai"),
-                        mockNominativeCase("moteris", "moterys"),
-                        mockNominativeCase("vaikas", "vaikai")
-                )),
-                Arguments.of(List.of(
-                        mockNominativeCase("vaikas", "vaikai"),
-                        mockNominativeCase("moteris", "moterys")
-                )),
-                Arguments.of(List.of(
-                        mockNominativeCase("namas", "namai"),
-                        mockNominativeCase("automobilis", "automobiliai"),
-                        mockNominativeCase("katinas", "katinai"),
-                        mockNominativeCase("surelis", "sureliai")
-                ))
-        );
+    @Test
+    void whenGetBySingularAndRepositoryReturnsNull_thenReturnEmptyOptional() {
+        // Given
+        final var singular = "vyras";
+        when(nominativeCaseRepository.findBySingular(singular)).thenReturn(null);
+
+        // When
+        final var result = nominativeCaseService.getBySingular(singular);
+
+        // Then
+        assertTrue(result.isEmpty());
     }
 
-    static private NominativeCase mockNominativeCase(String singular, String plural) {
-        return NominativeCase.builder()
-                .singular(singular)
-                .plural(plural)
-                .build();
+    @Test
+    void whenGetFixedAmountAndRepositoryReturnsCases_thenReturnCases() {
+        // Given
+        final var expectedCases = List.of(mockNominativeCase("vyras", "vyrai"), mockNominativeCase("moteris", "moterys"));
+        when(nominativeCaseRepository.findFixedAmountOfNominativeCases(2)).thenReturn(expectedCases);
+
+        // When
+        final var result = nominativeCaseService.getFixedAmount(2);
+
+        // Then
+        assertEquals(expectedCases, result);
+    }
+
+    @Test
+    void whenGetFixedAmountAndRepositoryReturnsEmptyList_thenReturnEmptyList() {
+        // Given
+        when(nominativeCaseRepository.findFixedAmountOfNominativeCases(2)).thenReturn(List.of());
+
+        // When
+        final var result = nominativeCaseService.getFixedAmount(2);
+
+        // Then
+        assertEquals(List.of(), result);
     }
 }
